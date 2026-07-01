@@ -24,7 +24,7 @@
 <h2>🇬🇧 English</h2>
 
 <p>
-<strong>Vestel & Toshiba TV Integration</strong> allows you to control smart televisions of brands such as Vestel, Toshiba, JVC, Hitachi, and Telefunken (which use the SmartCenter infrastructure) over your local network via the DIAL protocol in Home Assistant. It features a custom, realistic-looking remote control dashboard card.
+<strong>Vestel & Toshiba TV Integration</strong> allows you to control smart televisions of brands such as Vestel and Toshiba (which use the SmartCenter infrastructure) over your local network via the DIAL protocol in Home Assistant. It features a custom, realistic-looking remote control dashboard card.
 </p>
 
 <h3>🚀 Installation</h3>
