@@ -10,6 +10,8 @@ This custom component allows you to control smart televisions of brands such as 
 
 ### Method 1: Via HACS (Recommended)
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mutlutekir&repository=ha-vestel-toshiba-tv&category=integration)
+
 ### Method 2: Manual Installation
 
 1. Download this repository.
@@ -50,6 +52,8 @@ Bu özel bileşen, SmartCenter altyapısını kullanan Vestel, Toshiba, JVC, Hit
 ## 🚀 Kurulum
 
 ### Yöntem 1: HACS Üzerinden (Önerilen)
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mutlutekir&repository=ha-vestel-toshiba-tv&category=integration)
 
 ### Yöntem 2: Manuel Kurulum
 
