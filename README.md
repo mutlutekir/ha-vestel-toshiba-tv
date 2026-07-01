@@ -1,83 +1,111 @@
-# Vestel & Toshiba TV Integration for Home Assistant
+<h1 align="center">Vestel & Toshiba TV - Home Assistant Integration</h1>
 
-This custom component allows you to control smart televisions of brands such as Vestel, Toshiba, JVC, Hitachi, and Telefunken (which use the SmartCenter infrastructure) over your local network via the DIAL protocol in Home Assistant.
+<div align="center">
 
-## 👨‍💻 Developer
+<a href="https://github.com/hacs/integration">
+<img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge" alt="HACS">
+</a>
+<a href="https://github.com/mutlutekir/ha-vestel-toshiba-tv/releases">
+<img src="https://img.shields.io/github/v/release/mutlutekir/ha-vestel-toshiba-tv?style=for-the-badge&color=blue" alt="Release">
+</a>
+<a href="https://github.com/mutlutekir">
+<img src="https://img.shields.io/badge/maintainer-Mutlu%20Tekir-green?style=for-the-badge" alt="Maintainer">
+</a>
 
-**Mutlu Tekir** | [YouTube: @mutlutekir](https://www.youtube.com/@mutlutekir) | [GitHub: @mutlutekir](https://www.google.com/search?q=https://github.com/mutlutekir)
+<h3>
+<a href="#english">🇬🇧 English</a> | <a href="#türkçe-kılavuz">🇹🇷 Türkçe</a>
+</h3>
+</div>
 
-## 🚀 Installation
+<hr>
 
-### Method 1: Via HACS (Recommended)
+<div id="english"></div>
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mutlutekir&repository=ha-vestel-toshiba-tv&category=integration)
+<h2>🇬🇧 English</h2>
 
-### Method 2: Manual Installation
+<p>
+<strong>Vestel & Toshiba TV Integration</strong> allows you to control smart televisions of brands such as Vestel, Toshiba, JVC, Hitachi, and Telefunken (which use the SmartCenter infrastructure) over your local network via the DIAL protocol in Home Assistant. It features a custom, realistic-looking remote control dashboard card.
+</p>
 
-1. Download this repository.
-2. Copy the custom_components/vestel_toshiba_tv folder into your custom_components directory in your Home Assistant configuration folder.
-3. Restart Home Assistant.
+<h3>🚀 Installation</h3>
 
-## 📱 Dashboard (Remote Card) Setup
+<h4>Method 1: HACS (Recommended)</h4>
 
-To add the remote to your UI:
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=mutlutekir&repository=ha-vestel-toshiba-tv&category=integration" target="_blank">
+<img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.">
+</a>
 
-1. Go to your Dashboard and click Edit Dashboard.
-2. Click Add Card > Manual.
-3. Paste the following YAML code:
+<ol>
+<li>Open <strong>HACS</strong> in Home Assistant.</li>
+<li>Go to <strong>Integrations</strong> > click the 3 dots in the top right corner > <strong>Custom repositories</strong>.</li>
+<li>Paste the URL of this repository: <code>https://github.com/mutlutekir/ha-vestel-toshiba-tv</code></li>
+<li>Select <strong>Integration</strong> as the category and click <strong>Add</strong>.</li>
+<li>Search for <strong>"Vestel & Toshiba TV"</strong> and install it.</li>
+<li><strong>Restart</strong> Home Assistant.</li>
+</ol>
 
-type: custom:vestel-toshiba-tv-card
+<h4>Method 2: Manual</h4>
+<ol>
+<li>Copy the <code>custom_components/vestel_toshiba_tv</code> folder to your Home Assistant's <code>custom_components</code> directory.</li>
+<li><strong>Restart</strong> Home Assistant.</li>
+</ol>
+
+<h3>📱 Dashboard Card Setup</h3>
+<pre><code class="language-yaml">type: custom:vestel-toshiba-tv-card
 entity: media_player.vestel_toshiba_tv
 title: SmartCenter TV Kumandası
+</code></pre>
 
-4. Click Save.
+<h3>🛠️ Automations</h3>
+<p>You can use the <code>vestel_toshiba_tv.send_key</code> service in your automations with these commands:</p>
+<pre><code class="language-text">power, mute, volume_up, volume_down, channel_up, channel_down, up, down, left, right, ok, back, home, menu, exit, source, internet, favorites, play, stop, 0-9
+</code></pre>
 
-## 🛠️ Supported Commands
+<hr>
 
-You can use vestel_toshiba_tv.send_key in your automations with these commands:
-power, mute, volume_up, volume_down, channel_up, channel_down, up, down, left, right, ok, back, home, menu, exit, source, internet, favorites, play, stop, 0-9
+<div id="türkçe-kılavuz"></div>
 
----
+<h2>🇹🇷 Türkçe Kılavuz</h2>
 
----
+<p>
+<strong>Vestel & Toshiba TV Entegrasyonu</strong>, SmartCenter altyapısını kullanan Vestel, Toshiba, JVC, Hitachi, Telefunken gibi markaların akıllı televizyonlarını Home Assistant üzerinden yerel ağda kontrol etmenizi sağlar.
+</p>
 
-# Home Assistant için Vestel & Toshiba TV Entegrasyonu
+<h3>🚀 Kurulum</h3>
 
-Bu özel bileşen, SmartCenter altyapısını kullanan Vestel, Toshiba, JVC, Hitachi, Telefunken gibi markaların akıllı televizyonlarını Home Assistant üzerinden yerel ağda kontrol etmenizi sağlar.
+<h4>Yöntem 1: HACS (Önerilen)</h4>
 
-## 👨‍💻 Geliştirici
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=mutlutekir&repository=ha-vestel-toshiba-tv&category=integration" target="_blank">
+<img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Home Assistant örneğinizi açın ve Home Assistant Topluluk Mağazası içinde bir depo açın.">
+</a>
 
-**Mutlu Tekir** | [YouTube: @mutlutekir](https://www.youtube.com/@mutlutekir) | [GitHub: @mutlutekir](https://www.google.com/search?q=https://github.com/mutlutekir)
+<ol>
+<li>Home Assistant'ta <strong>HACS</strong> menüsünü açın.</li>
+<li><strong>Integrations</strong> kısmına gidin > sağ üstteki üç noktaya tıklayın > <strong>Custom repositories</strong>.</li>
+<li>Bu reponun adresini yapıştırın: <code>https://github.com/mutlutekir/ha-vestel-toshiba-tv</code></li>
+<li>Kategori olarak <strong>Integration</strong> seçin ve <strong>Ekle</strong> deyin.</li>
+<li>Listeden <strong>"Vestel & Toshiba TV"</strong> entegrasyonunu bulup indirin.</li>
+<li>Home Assistant'ı <strong>Yeniden Başlatın</strong>.</li>
+</ol>
 
-## 🚀 Kurulum
+<h4>Yöntem 2: Manuel</h4>
+<ol>
+<li><code>custom_components/vestel_toshiba_tv</code> klasörünü Home Assistant dizininizdeki <code>custom_components</code> klasörünün içine kopyalayın.</li>
+<li>Home Assistant'ı <strong>Yeniden Başlatın</strong>.</li>
+</ol>
 
-### Yöntem 1: HACS Üzerinden (Önerilen)
-
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mutlutekir&repository=ha-vestel-toshiba-tv&category=integration)
-
-### Yöntem 2: Manuel Kurulum
-
-1. Bu repoyu indirin.
-2. İçindeki custom_components/vestel_toshiba_tv klasörünü custom_components dizinine kopyalayın.
-3. Home Assistant'ı yeniden başlatın.
-
-## 📱 Dashboard (Kumanda) Kurulumu
-
-Kumandayı arayüze eklemek için:
-
-1. Gösterge Paneline gidin ve Paneli Düzenle deyin.
-2. Kart Ekle > Manuel seçin.
-3. Aşağıdaki YAML kodunu yapıştırın:
-
-type: custom:vestel-toshiba-tv-card
+<h3>📱 Dashboard (Kumanda) Kurulumu</h3>
+<pre><code class="language-yaml">type: custom:vestel-toshiba-tv-card
 entity: media_player.vestel_toshiba_tv
 title: SmartCenter TV Kumandası
+</code></pre>
 
-4. Kaydet butonuna basın.
+<h3>🛠️ Otomasyonlar</h3>
+<p><code>vestel_toshiba_tv.send_key</code> servisini otomasyonlarınızda kullanabilirsiniz:</p>
+<pre><code class="language-text">power, mute, volume_up, volume_down, channel_up, channel_down, up, down, left, right, ok, back, home, menu, exit, source, internet, favorites, play, stop, 0-9
+</code></pre>
 
-## 🛠️ Desteklenen Komutlar & Otomasyonlar
-
-vestel_toshiba_tv.send_key servisini otomasyonlarınızda kullanabilirsiniz.
-
-Desteklenen komutlar:
-power, mute, volume_up, volume_down, channel_up, channel_down, up, down, left, right, ok, back, home, menu, exit, source, internet, favorites, play, stop, 0-9
+<h3>❤️ Geliştirici</h3>
+<ul>
+<li><strong>Geliştirici:</strong> Mutlu Tekir</li>
+</ul>
