@@ -68,7 +68,7 @@ title: SmartCenter TV Kumandası
 <h2>🇹🇷 Türkçe Kılavuz</h2>
 
 <p>
-<strong>Vestel & Toshiba TV Entegrasyonu</strong>, SmartCenter altyapısını kullanan Vestel, Toshiba, JVC, Hitachi, Telefunken gibi markaların akıllı televizyonlarını Home Assistant üzerinden yerel ağda kontrol etmenizi sağlar.
+<strong>Vestel & Toshiba TV Entegrasyonu</strong>, SmartCenter altyapısını kullanan Vestel ve Toshiba gibi markaların akıllı televizyonlarını Home Assistant üzerinden yerel ağda kontrol etmenizi sağlar.
 </p>
 
 <h3>🚀 Kurulum</h3>
