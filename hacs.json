@@ -1,0 +1,6 @@
+{
+  "name": "Vestel & Toshiba TV",
+  "render_readme": true,
+  "iot_class": "local_polling",
+  "domain": "vestel_toshiba_tv"
+}
