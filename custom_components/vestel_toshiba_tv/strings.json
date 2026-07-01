@@ -1,0 +1,33 @@
+{
+  "title": "Vestel & Toshiba TV Remote Control",
+  "config": {
+    "step": {
+      "user": {
+        "title": "TV Kur",
+        "description": "Ağınızda TV aranıyor..."
+      },
+      "discovery_confirm": {
+        "title": "TV Bulundu",
+        "description": "{count} adet TV bulundu. Eklemek istediğinizi seçin.",
+        "data": {
+          "tv": "TV Seç"
+        }
+      },
+      "manual": {
+        "title": "Manuel TV Ekle",
+        "description": "TV'nizin IP adresini ve portunu girin.",
+        "data": {
+          "host": "IP Adresi",
+          "port": "Port",
+          "name": "TV Adı"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "TV'ye bağlanılamadı. IP adresini kontrol edin ve TV'nin açık olduğundan emin olun."
+    },
+    "abort": {
+      "already_configured": "Bu TV zaten eklenmiş."
+    }
+  }
+}

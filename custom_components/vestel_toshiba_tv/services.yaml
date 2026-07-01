@@ -1,0 +1,47 @@
+send_key:
+  name: TV Tuş Gönder
+  description: "Vestel/Toshiba TV'ye adlandırılmış bir tuş kodu gönderir."
+  target:
+    entity:
+      domain: media_player
+      integration: vestel_toshiba_tv
+  fields:
+    key:
+      name: Tuş
+      description: "Gönderilecek tuşun adı (örn: home, back, ok, up, down, left, right, 1..9, play, stop...)"
+      required: true
+      example: "home"
+      selector:
+        select:
+          options:
+            - "power"
+            - "mute"
+            - "volume_up"
+            - "volume_down"
+            - "channel_up"
+            - "channel_down"
+            - "up"
+            - "down"
+            - "left"
+            - "right"
+            - "ok"
+            - "back"
+            - "home"
+            - "menu"
+            - "exit"
+            - "source"
+            - "internet"
+            - "favorites"
+            - "play"
+            - "stop"
+            - "channel_list"
+            - "0"
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "9"
