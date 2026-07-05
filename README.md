@@ -15,6 +15,8 @@
 <h3>
 <a href="#english">🇬🇧 English</a> | <a href="#türkçe-kılavuz">🇹🇷 Türkçe</a>
 </h3>
+<img width="329" height="724" alt="Ekran görüntüsü 2026-07-05 171314" src="https://github.com/user-attachments/assets/d14bb3ca-4dbf-43a1-94b2-06f22068e601" />
+
 </div>
 
 <hr>
