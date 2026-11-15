@@ -52,3 +52,19 @@ SOURCE_CODES = {
     "YouTube": 1065,
     "Netflix": 1065,
 }
+
+# Apple Home remote (HA HomeKit Bridge fires this event for TV accessories)
+HOMEKIT_REMOTE_EVENT = "homekit_tv_remote_key_pressed"
+
+# Apple Home remote key -> TV key name (see KEY_CODES)
+HOMEKIT_KEY_MAP = {
+    "arrow_up": "up",
+    "arrow_down": "down",
+    "arrow_left": "left",
+    "arrow_right": "right",
+    "select": "ok",
+    "back": "back",
+    "exit": "exit",
+    "play_pause": "play",
+    "information": "home",
+}
