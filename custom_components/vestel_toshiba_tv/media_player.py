@@ -7,18 +7,21 @@ import xml.etree.ElementTree as ET
 import aiohttp
 
 from homeassistant.components.media_player import (
+    MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
     MediaPlayerState,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DOMAIN,
     DEFAULT_PORT,
     DIAL_APP_PATH,
+    HOMEKIT_KEY_MAP,
+    HOMEKIT_REMOTE_EVENT,
     KEY_CODES,
     SOURCE_LIST,
     SOURCE_CODES,
@@ -62,6 +65,7 @@ class VestelToshibaTV(MediaPlayerEntity):
     _attr_supported_features = SUPPORTED_FEATURES
     _attr_source_list = SOURCE_LIST
     _attr_icon = "mdi:television-play"
+    _attr_device_class = MediaPlayerDeviceClass.TV
 
     def __init__(self, host: str, port: int, name: str, unique_id: str) -> None:
         self._host = host
@@ -82,6 +86,25 @@ class VestelToshibaTV(MediaPlayerEntity):
     @property
     def state(self) -> MediaPlayerState:
         return self._attr_state
+
+    # ── Apple Home (HomeKit Bridge) remote ─────────────────────────────
+
+    async def async_added_to_hass(self) -> None:
+        """Listen for Apple Home remote key presses for this TV."""
+        await super().async_added_to_hass()
+        self.async_on_remove(
+            self.hass.bus.async_listen(
+                HOMEKIT_REMOTE_EVENT, self._handle_homekit_key
+            )
+        )
+
+    async def _handle_homekit_key(self, event: Event) -> None:
+        """Translate an Apple Home remote key into a TV key."""
+        if event.data.get("entity_id") != self.entity_id:
+            return
+        key = HOMEKIT_KEY_MAP.get(event.data.get("key_name"))
+        if key is not None:
+            await self.async_send_key(key)
 
     # ── Polling ────────────────────────────────────────────────────────
 
