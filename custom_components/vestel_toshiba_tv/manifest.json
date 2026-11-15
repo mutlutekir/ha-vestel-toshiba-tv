@@ -1,11 +1,11 @@
 {
   "domain": "vestel_toshiba_tv",
   "name": "Vestel & Toshiba TV Remote Control",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "documentation": "https://github.com/",
   "requirements": [],
   "dependencies": ["lovelace"],
-  "codeowners": [],
+  "codeowners": [mutlutekir],
   "iot_class": "local_polling",
   "config_flow": true
 }
