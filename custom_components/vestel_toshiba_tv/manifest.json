@@ -5,7 +5,7 @@
   "documentation": "https://github.com/",
   "requirements": [],
   "dependencies": ["lovelace"],
-  "codeowners": [mutlutekir],
+  "codeowners": ["@mutlutekir"],
   "iot_class": "local_polling",
   "config_flow": true
 }
