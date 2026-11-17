@@ -12,8 +12,16 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .const import DOMAIN, DEFAULT_PORT, DIAL_APP_PATH
+
+MANUAL_OPTION = "manual"
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -138,7 +146,7 @@ class VestelToshibaTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             selected = user_input["tv"]
-            if selected == "__manual__":
+            if selected == MANUAL_OPTION:
                 return await self.async_step_manual()
 
             host, _, label = selected.partition("|")
@@ -153,13 +161,27 @@ class VestelToshibaTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={"host": host, "port": DEFAULT_PORT, "name": label},
                 )
 
-        tv_options = {
-            f"{tv['host']}|{tv['name']}": tv["name"]
+        tv_options = [
+            SelectOptionDict(value=f"{tv['host']}|{tv['name']}", label=tv["name"])
             for tv in self._discovered_tvs
-        }
-        tv_options["__manual__"] = "➕ Manuel IP Gir"
+        ]
+        # Label comes from translations (selector.tv.options.manual);
+        # the English text here is only a fallback.
+        tv_options.append(
+            SelectOptionDict(value=MANUAL_OPTION, label="➕ Enter IP address manually")
+        )
 
-        schema = vol.Schema({vol.Required("tv"): vol.In(tv_options)})
+        schema = vol.Schema(
+            {
+                vol.Required("tv"): SelectSelector(
+                    SelectSelectorConfig(
+                        options=tv_options,
+                        mode=SelectSelectorMode.LIST,
+                        translation_key="tv",
+                    )
+                )
+            }
+        )
 
         return self.async_show_form(
             step_id="discovery_confirm",

@@ -3,31 +3,50 @@
   "config": {
     "step": {
       "user": {
-        "title": "TV Kur",
-        "description": "Ağınızda TV aranıyor..."
+        "title": "Set up TV",
+        "description": "Searching for TVs on your network..."
       },
       "discovery_confirm": {
-        "title": "TV Bulundu",
-        "description": "{count} adet TV bulundu. Eklemek istediğinizi seçin.",
+        "title": "TV found",
+        "description": "Found {count} TV(s). Select the one you want to add.",
         "data": {
-          "tv": "TV Seç"
+          "tv": "TV"
         }
       },
       "manual": {
-        "title": "Manuel TV Ekle",
-        "description": "TV'nizin IP adresini ve portunu girin.",
+        "title": "Add TV manually",
+        "description": "Enter your TV's IP address and port.",
         "data": {
-          "host": "IP Adresi",
+          "host": "IP address",
           "port": "Port",
-          "name": "TV Adı"
+          "name": "TV name"
         }
       }
     },
     "error": {
-      "cannot_connect": "TV'ye bağlanılamadı. IP adresini kontrol edin ve TV'nin açık olduğundan emin olun."
+      "cannot_connect": "Could not connect to the TV. Check the IP address and make sure the TV is turned on."
     },
     "abort": {
-      "already_configured": "Bu TV zaten eklenmiş."
+      "already_configured": "This TV is already configured."
+    }
+  },
+  "selector": {
+    "tv": {
+      "options": {
+        "manual": "➕ Enter IP address manually"
+      }
+    }
+  },
+  "services": {
+    "send_key": {
+      "name": "Send key",
+      "description": "Sends a named remote control key to a Vestel/Toshiba TV.",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "Name of the key to send (e.g. home, back, ok, up, down, left, right, 0-9, play, stop)."
+        }
+      }
     }
   }
 }

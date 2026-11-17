@@ -1,14 +1,14 @@
 send_key:
-  name: TV Tuş Gönder
-  description: "Vestel/Toshiba TV'ye adlandırılmış bir tuş kodu gönderir."
+  name: Send key
+  description: "Sends a named remote control key to a Vestel/Toshiba TV."
   target:
     entity:
       domain: media_player
       integration: vestel_toshiba_tv
   fields:
     key:
-      name: Tuş
-      description: "Gönderilecek tuşun adı (örn: home, back, ok, up, down, left, right, 1..9, play, stop...)"
+      name: Key
+      description: "Name of the key to send (e.g. home, back, ok, up, down, left, right, 0-9, play, stop)."
       required: true
       example: "home"
       selector:
