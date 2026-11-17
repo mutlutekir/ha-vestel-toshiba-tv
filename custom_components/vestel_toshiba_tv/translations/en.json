@@ -1,1 +1,52 @@
-
+{
+  "title": "Vestel & Toshiba TV Remote Control",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up TV",
+        "description": "Searching for TVs on your network..."
+      },
+      "discovery_confirm": {
+        "title": "TV found",
+        "description": "Found {count} TV(s). Select the one you want to add.",
+        "data": {
+          "tv": "TV"
+        }
+      },
+      "manual": {
+        "title": "Add TV manually",
+        "description": "Enter your TV's IP address and port.",
+        "data": {
+          "host": "IP address",
+          "port": "Port",
+          "name": "TV name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the TV. Check the IP address and make sure the TV is turned on."
+    },
+    "abort": {
+      "already_configured": "This TV is already configured."
+    }
+  },
+  "selector": {
+    "tv": {
+      "options": {
+        "manual": "➕ Enter IP address manually"
+      }
+    }
+  },
+  "services": {
+    "send_key": {
+      "name": "Send key",
+      "description": "Sends a named remote control key to a Vestel/Toshiba TV.",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "Name of the key to send (e.g. home, back, ok, up, down, left, right, 0-9, play, stop)."
+        }
+      }
+    }
+  }
+}
