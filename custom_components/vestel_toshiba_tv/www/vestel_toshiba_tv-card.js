@@ -150,12 +150,15 @@ class VestelToshibaTVCard extends HTMLElement {
     </style>
 
     <div class="container">
-      <div class="header">${title}</div>
+      <div class="header"></div>
       <div class="grid">
         ${gridHtml}
       </div>
     </div>
     `;
+
+    // Set as text, so markup in the dashboard config is not rendered
+    this.shadowRoot.querySelector(".header").textContent = title;
 
     this.shadowRoot.querySelectorAll("[data-key]").forEach(el => {
       el.addEventListener("click", () => this._send(el.dataset.key));
