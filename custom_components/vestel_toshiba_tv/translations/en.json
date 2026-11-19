@@ -30,6 +30,38 @@
       "already_configured": "This TV is already configured."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "TV options",
+        "description": "Volume buttons and Apple Home / Siri shortcuts.",
+        "data": {
+          "volume_steps": "Volume steps per press",
+          "shortcut_sources": "Add volume and channel shortcuts to the TV inputs (for Siri)"
+        },
+        "data_description": {
+          "volume_steps": "How many steps the Volume up and Volume down buttons change the volume each time they are pressed.",
+          "shortcut_sources": "Adds Volume up, Volume down, Next channel and Previous channel to the TV's input list. HomeKit gives Siri no volume or channel control for TVs, only switching inputs; choosing one of these in Apple Home (or asking Siri to switch the TV to it) runs the action instead of changing the input."
+        }
+      }
+    }
+  },
+  "entity": {
+    "button": {
+      "volume_up": {
+        "name": "Volume up"
+      },
+      "volume_down": {
+        "name": "Volume down"
+      },
+      "channel_up": {
+        "name": "Next channel"
+      },
+      "channel_down": {
+        "name": "Previous channel"
+      }
+    }
+  },
   "selector": {
     "tv": {
       "options": {

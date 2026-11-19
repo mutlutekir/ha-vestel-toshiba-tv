@@ -30,6 +30,38 @@
       "already_configured": "Bu TV zaten eklenmiş."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "TV ayarları",
+        "description": "Ses düğmeleri ve Apple Home / Siri kısayolları.",
+        "data": {
+          "volume_steps": "Basış başına ses kademesi",
+          "shortcut_sources": "TV girişlerine ses ve kanal kısayollarını ekle (Siri için)"
+        },
+        "data_description": {
+          "volume_steps": "Ses artır ve Ses azalt düğmelerinin her basışta sesi kaç kademe değiştireceği.",
+          "shortcut_sources": "TV'nin giriş listesine Ses artır, Ses azalt, Sonraki kanal ve Önceki kanal ekler. HomeKit, Siri'ye TV'lerde ses ve kanal kontrolü vermez, yalnızca giriş değiştirmeye izin verir; Apple Home'da bunlardan biri seçildiğinde (ya da Siri'ye TV'yi ona geçirmesi söylendiğinde) giriş değişmez, o işlem yapılır."
+        }
+      }
+    }
+  },
+  "entity": {
+    "button": {
+      "volume_up": {
+        "name": "Ses artır"
+      },
+      "volume_down": {
+        "name": "Ses azalt"
+      },
+      "channel_up": {
+        "name": "Sonraki kanal"
+      },
+      "channel_down": {
+        "name": "Önceki kanal"
+      }
+    }
+  },
   "selector": {
     "tv": {
       "options": {
