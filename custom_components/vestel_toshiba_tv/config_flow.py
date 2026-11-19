@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import logging
 import xml.etree.ElementTree as ET
 from typing import Any
 
@@ -10,16 +11,30 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.components import network
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.selector import (
+    BooleanSelector,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
 )
 
-from .const import DOMAIN, DEFAULT_PORT, DIAL_APP_PATH
+from .const import (
+    CONF_SHORTCUT_SOURCES,
+    CONF_VOLUME_STEPS,
+    DEFAULT_PORT,
+    DEFAULT_VOLUME_STEPS,
+    DIAL_APP_PATH,
+    DOMAIN,
+    MAX_VOLUME_STEPS,
+    MIN_VOLUME_STEPS,
+)
 
 MANUAL_OPTION = "manual"
 
@@ -46,21 +61,24 @@ async def _test_connection(host: str, port: int) -> dict | None:
     return None
 
 
-def _get_local_subnets(hass: HomeAssistant) -> list[str]:
-    """Return local /24 subnets from HA's known adapters."""
+_LOGGER = logging.getLogger(__name__)
+
+
+async def _async_get_local_subnets(hass: HomeAssistant) -> list[str]:
+    """Return local /24 subnets from HA's enabled network adapters."""
     subnets: list[str] = []
     try:
-        from homeassistant.components.network import async_get_adapters
-        # async_get_adapters is a coroutine — collect synchronously via stored adapters
-        adapters = hass.data.get("network", {}).get("adapters", [])
-        for adapter in adapters:
-            for ip_info in adapter.get("ipv4", []):
-                ip = ip_info.get("address", "")
+        for adapter in await network.async_get_adapters(hass):
+            if not adapter["enabled"]:
+                continue
+            for ip_info in adapter["ipv4"]:
+                ip = ip_info["address"]
                 if ip and not ip.startswith("127."):
                     net = str(ipaddress.IPv4Network(f"{ip}/24", strict=False))
-                    subnets.append(net)
-    except Exception:
-        pass
+                    if net not in subnets:
+                        subnets.append(net)
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.debug("Network adapters could not be read: %s", err)
 
     # Fallback: derive from HA's own IP stored in config
     if not subnets:
@@ -81,7 +99,7 @@ def _get_local_subnets(hass: HomeAssistant) -> list[str]:
 async def _discover_tvs(hass: HomeAssistant) -> list[dict]:
     """Discover Vestel/Toshiba TVs on the local network via DIAL."""
     found: list[dict] = []
-    subnets = _get_local_subnets(hass)
+    subnets = await _async_get_local_subnets(hass)
 
     async def check_host(ip: str) -> None:
         url = f"http://{ip}:{DEFAULT_PORT}{DIAL_APP_PATH}"
@@ -126,6 +144,14 @@ class VestelToshibaTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._discovered_tvs: list[dict] = []
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> VestelToshibaTVOptionsFlow:
+        """Return the options flow."""
+        return VestelToshibaTVOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -219,3 +245,42 @@ class VestelToshibaTVConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
         )
+
+
+class VestelToshibaTVOptionsFlow(config_entries.OptionsFlow):
+    """Options: volume step size and the Apple Home / Siri shortcut inputs."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        if user_input is not None:
+            return self.async_create_entry(
+                data={
+                    CONF_VOLUME_STEPS: int(user_input[CONF_VOLUME_STEPS]),
+                    CONF_SHORTCUT_SOURCES: bool(
+                        user_input.get(CONF_SHORTCUT_SOURCES, False)
+                    ),
+                }
+            )
+
+        options = self.config_entry.options
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_VOLUME_STEPS,
+                    default=options.get(CONF_VOLUME_STEPS, DEFAULT_VOLUME_STEPS),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=MIN_VOLUME_STEPS,
+                        max=MAX_VOLUME_STEPS,
+                        step=1,
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_SHORTCUT_SOURCES,
+                    default=options.get(CONF_SHORTCUT_SOURCES, False),
+                ): BooleanSelector(),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)

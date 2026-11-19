@@ -2,80 +2,93 @@
 from __future__ import annotations
 
 import logging
-import shutil
 from pathlib import Path
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.loader import async_get_integration
 
-from .const import DOMAIN
+from .const import DOMAIN, SIGNAL_OPTIONS_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS = ["media_player"]
+PLATFORMS = ["media_player", "button"]
 
 CARD_FILENAME = "vestel_toshiba_tv-card.js"
-_REGISTERED = False
+# The card is served straight from custom_components/vestel_toshiba_tv/www
+CARD_URL_BASE = f"/{DOMAIN}"
+CARD_URL = f"{CARD_URL_BASE}/{CARD_FILENAME}"
+# Versions up to 1.1.x copied the card to config/www and used this URL
+LEGACY_CARD_URL = f"/local/{CARD_FILENAME}"
+DATA_CARD_REGISTERED = f"{DOMAIN}_card_registered"
 
 
-async def _register_card(hass: HomeAssistant) -> None:
-    """JS kartını config/www/ altına kopyala, Lovelace resource olarak ekle."""
-    src = Path(__file__).parent / "www" / CARD_FILENAME
+async def _async_register_card(hass: HomeAssistant) -> None:
+    """Serve the dashboard card and add it as a dashboard resource (once)."""
+    if hass.data.get(DATA_CARD_REGISTERED) or hass.http is None:
+        return
+    hass.data[DATA_CARD_REGISTERED] = True
 
-    www_dir = Path(hass.config.config_dir) / "www"
-    www_dir.mkdir(exist_ok=True)
-    dst = www_dir / CARD_FILENAME
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(CARD_URL_BASE, str(Path(__file__).parent / "www"), False)]
+    )
+    integration = await async_get_integration(hass, DOMAIN)
+    url = f"{CARD_URL}?v={integration.version}"
 
-    # Dosyayı kopyala (her güncellemede üzerine yaz)
-    await hass.async_add_executor_job(shutil.copy2, str(src), str(dst))
-    _LOGGER.debug("Kart kopyalandı: %s", dst)
+    lovelace = hass.data.get("lovelace")
+    resources = getattr(lovelace, "resources", None)
+    if resources is None or getattr(lovelace, "resource_mode", "storage") != "storage":
+        _LOGGER.info(
+            "Dashboard resources are managed in YAML; add the card yourself: "
+            "url: %s, type: module",
+            url,
+        )
+        return
 
-    # Lovelace resource olarak kaydet
-    url = f"/local/{CARD_FILENAME}"
     try:
-        lovelace = hass.data.get("lovelace")
-        if lovelace and hasattr(lovelace, "resources"):
-            resources = lovelace.resources
-            await resources.async_load()
-            existing = [r["url"] for r in resources.async_items()]
-            if url not in existing:
-                await resources.async_create_item({"res_type": "module", "url": url})
-                _LOGGER.info("Lovelace resource eklendi: %s", url)
-    except Exception as err:
+        await resources.async_get_info()  # makes sure the resources are loaded
+        found = False
+        for item in list(resources.async_items()):
+            if item.get("url", "").split("?")[0] not in (CARD_URL, LEGACY_CARD_URL):
+                continue
+            if found:  # duplicate entry for the card
+                await resources.async_delete_item(item["id"])
+            elif item["url"] != url:  # old /local/ URL or older version
+                await resources.async_update_item(
+                    item["id"], {"res_type": "module", "url": url}
+                )
+            found = True
+        if not found:
+            await resources.async_create_item({"res_type": "module", "url": url})
+    except Exception as err:  # noqa: BLE001
         _LOGGER.warning(
-            "Lovelace resource otomatik eklenemedi (%s). "
-            "Ayarlar → Dashboard → Kaynaklar → Ekle → %s",
-            err, url,
+            "Could not add the card as a dashboard resource (%s). Add it under "
+            "Settings > Dashboards > Resources: %s (JavaScript module)",
+            err,
+            url,
         )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Vestel & Toshiba TV from a config entry."""
-    global _REGISTERED
-
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    if not _REGISTERED:
-        await _register_card(hass)
-        _REGISTERED = True
+    await _async_register_card(hass)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    async def handle_send_key(call: ServiceCall) -> None:
-        key = call.data.get("key", "")
-        component = hass.data.get("entity_components", {}).get("media_player")
-        
-        if not component:
-            return
-            
-        for entity in component.entities:
-            # entity_id parametresi uyuşmazlıklarını önlemek için kontrolü kaldırdık.
-            # Sadece bu entegrasyona ait olan fonksiyona sahip cihazı bul ve komutu ateşle.
-            if hasattr(entity, "async_send_key"):
-                await entity.async_send_key(key)
-
-    hass.services.async_register(DOMAIN, "send_key", handle_send_key)
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply new options without reloading the entry.
+
+    A reload makes the TV briefly unavailable, and HomeKit Bridge only rebuilds
+    the TV's inputs when the input list changes while the TV is available.
+    """
+    async_dispatcher_send(hass, SIGNAL_OPTIONS_UPDATED.format(entry.entry_id))
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
