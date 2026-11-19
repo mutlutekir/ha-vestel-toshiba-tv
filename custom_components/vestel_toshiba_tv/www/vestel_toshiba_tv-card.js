@@ -14,15 +14,26 @@ class VestelToshibaTVCard extends HTMLElement {
     this._hass = hass;
   }
 
+  _haptic() {
+    window.dispatchEvent(new CustomEvent("haptic", { detail: "light" }));
+  }
+
   _send(key) {
     if (!this._hass || !this._config.entity) return;
-
-    const haptic = new CustomEvent("haptic", { detail: "light" });
-    window.dispatchEvent(haptic);
-
+    this._haptic();
     this._hass.callService("vestel_toshiba_tv", "send_key", {
       entity_id: this._config.entity,
       key: key
+    });
+  }
+
+  // Netflix / YouTube: open the app on the TV (same as choosing the input)
+  _selectSource(source) {
+    if (!this._hass || !this._config.entity) return;
+    this._haptic();
+    this._hass.callService("media_player", "select_source", {
+      entity_id: this._config.entity,
+      source: source
     });
   }
 
@@ -49,15 +60,15 @@ class VestelToshibaTVCard extends HTMLElement {
 
       { key: "back", icon: "mdi:backup-restore", name: "Back" },
       { key: "down", icon: "mdi:menu-down" },
-      { key: "internet", icon: "mdi:web" },
+      { key: "exit", icon: "mdi:close-box", name: "Exit" },
+
+      { source: "Netflix", icon: "mdi:netflix", name: "Netflix" },
+      { source: "YouTube", icon: "mdi:youtube", name: "YouTube" },
+      { key: "internet", icon: "mdi:web", name: "Internet" },
 
       { key: "favorites", icon: "mdi:star" },
       { key: "stop", icon: "mdi:pause", name: "Stop" },
       { key: "play", icon: "mdi:play", name: "Play" },
-
-      { key: "channel_list", icon: "mdi:list-box", name: "Channel List" },
-      { key: "source", icon: "mdi:import", name: "Source" },
-      { key: "exit", icon: "mdi:close-box", name: "Exit" },
 
       { key: "1", icon: "mdi:numeric-1" },
       { key: "2", icon: "mdi:numeric-2" },
@@ -71,9 +82,9 @@ class VestelToshibaTVCard extends HTMLElement {
       { key: "8", icon: "mdi:numeric-8" },
       { key: "9", icon: "mdi:numeric-9" },
 
+      { key: "channel_list", icon: "mdi:list-box", name: "Channel List" },
       { key: "0", icon: "mdi:numeric-0" },
-      { empty: true },
-      { empty: true }
+      { key: "source", icon: "mdi:import", name: "Source" }
     ];
 
     let gridHtml = "";
@@ -81,8 +92,11 @@ class VestelToshibaTVCard extends HTMLElement {
       if (btn.empty) {
         gridHtml += `<div></div>`;
       } else {
+        const action = btn.source
+          ? `data-source="${btn.source}"`
+          : `data-key="${btn.key}"`;
         gridHtml += `
-          <button class="btn" data-key="${btn.key}">
+          <button class="btn" ${action}>
             <ha-icon icon="${btn.icon}"></ha-icon>
             ${btn.name ? `<div class="btn-name">${btn.name}</div>` : ""}
           </button>
@@ -162,6 +176,9 @@ class VestelToshibaTVCard extends HTMLElement {
 
     this.shadowRoot.querySelectorAll("[data-key]").forEach(el => {
       el.addEventListener("click", () => this._send(el.dataset.key));
+    });
+    this.shadowRoot.querySelectorAll("[data-source]").forEach(el => {
+      el.addEventListener("click", () => this._selectSource(el.dataset.source));
     });
   }
 
