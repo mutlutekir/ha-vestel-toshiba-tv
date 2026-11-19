@@ -10,10 +10,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.loader import async_get_integration
 
-from .const import DOMAIN, SIGNAL_OPTIONS_UPDATED
+from .const import DATA_TV_ENTITY, DOMAIN, SIGNAL_OPTIONS_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS = ["media_player", "button"]
+PLATFORMS = ["media_player", "button", "sensor"]
 
 CARD_FILENAME = "vestel_toshiba_tv-card.js"
 # The card is served straight from custom_components/vestel_toshiba_tv/www
@@ -96,4 +96,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+        hass.data[DOMAIN].pop(DATA_TV_ENTITY.format(entry.entry_id), None)
     return unload_ok

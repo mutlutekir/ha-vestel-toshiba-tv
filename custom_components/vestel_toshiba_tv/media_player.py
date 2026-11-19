@@ -17,7 +17,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import config_validation as cv, entity_platform
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import voluptuous as vol
 
@@ -35,6 +38,8 @@ from .const import (
     APP_CLOSE_DELAY,
     CHANNEL_KEYS,
     CONF_SHORTCUT_SOURCES,
+    DATA_TV_ENTITY,
+    DOMAIN,
     DMR_PORT,
     DEFAULT_PORT,
     DIAL_APP_PATH,
@@ -44,6 +49,7 @@ from .const import (
     KEY_CODES,
     SHORTCUT_SOURCES,
     SIGNAL_OPTIONS_UPDATED,
+    SIGNAL_TV_ENTITY,
     SOURCE_LIST,
     TV_SOURCE,
     VOLUME_KEYS,
@@ -168,6 +174,14 @@ class VestelToshibaTV(MediaPlayerEntity):
                 SIGNAL_OPTIONS_UPDATED.format(self._entry.entry_id),
                 self._handle_options_updated,
             )
+        )
+
+        # Tell the sensors which entity to follow
+        self.hass.data[DOMAIN][DATA_TV_ENTITY.format(self._entry.entry_id)] = (
+            self.entity_id
+        )
+        async_dispatcher_send(
+            self.hass, SIGNAL_TV_ENTITY.format(self._entry.entry_id), self.entity_id
         )
 
     @callback

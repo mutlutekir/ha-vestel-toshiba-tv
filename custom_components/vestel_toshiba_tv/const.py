@@ -8,6 +8,9 @@ SCAN_INTERVAL = 30  # seconds
 # Options
 # Sent when the options change; applied live (no reload, see __init__.py)
 SIGNAL_OPTIONS_UPDATED = f"{DOMAIN}_options_updated_{{}}"
+# Sent by the media player with its entity_id, for the sensors that follow it
+SIGNAL_TV_ENTITY = f"{DOMAIN}_tv_entity_{{}}"
+DATA_TV_ENTITY = "tv_entity_{}"
 CONF_VOLUME_STEPS = "volume_steps"
 DEFAULT_VOLUME_STEPS = 3
 MIN_VOLUME_STEPS = 1
