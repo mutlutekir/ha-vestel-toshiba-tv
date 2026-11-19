@@ -60,6 +60,20 @@
       "channel_down": {
         "name": "Önceki kanal"
       }
+    },
+    "sensor": {
+      "activity": {
+        "name": "Durum",
+        "state": {
+          "off": "Kapalı",
+          "tv": "TV yayını",
+          "youtube": "YouTube",
+          "netflix": "Netflix"
+        }
+      },
+      "volume": {
+        "name": "Ses seviyesi"
+      }
     }
   },
   "selector": {

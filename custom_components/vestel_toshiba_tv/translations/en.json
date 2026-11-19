@@ -60,6 +60,20 @@
       "channel_down": {
         "name": "Previous channel"
       }
+    },
+    "sensor": {
+      "activity": {
+        "name": "Status",
+        "state": {
+          "off": "Off",
+          "tv": "TV broadcast",
+          "youtube": "YouTube",
+          "netflix": "Netflix"
+        }
+      },
+      "volume": {
+        "name": "Volume"
+      }
     }
   },
   "selector": {
