@@ -13,13 +13,20 @@ from .const import DIAL_APP_PATH, DMR_CONTROL_PATH, KEY_REPEAT_DELAY
 _LOGGER = logging.getLogger(__name__)
 
 
+class TvConnectionError(Exception):
+    """The TV could not be reached."""
+
+
 async def async_send_key(host: str, port: int, code: int) -> None:
-    """Send one remote key code to the TV."""
+    """Send one remote key code to the TV.
+
+    Raises TvConnectionError if the TV cannot be reached.
+    """
     url = f"http://{host}:{port}{DIAL_APP_PATH}"
-    # DİKKAT: TV tırnak işaretlerini sevmediği için code değişkeni tırnaksız gönderiliyor
+    # The TV rejects a quoted code, so it is sent without quotes
     payload = f"<remote><key code={code} /></remote>"
     try:
-        # TV'nin sunucusu kilitlenmesin diye bağlantıyı zorla kapatıyoruz (force_close)
+        # Close the connection after each key so the TV's server does not hang
         connector = aiohttp.TCPConnector(force_close=True)
         async with aiohttp.ClientSession(connector=connector) as session:
             async with session.post(
@@ -31,9 +38,9 @@ async def async_send_key(host: str, port: int, code: int) -> None:
                 },
                 timeout=aiohttp.ClientTimeout(total=3),
             ) as resp:
-                _LOGGER.debug("Tus %s gonderildi, TV yaniti: %s", code, resp.status)
-    except Exception as err:  # noqa: BLE001
-        _LOGGER.error("Tus gonderilirken hata olustu %s: %s", code, err)
+                _LOGGER.debug("Key %s sent, TV answered %s", code, resp.status)
+    except (aiohttp.ClientError, TimeoutError, OSError) as err:
+        raise TvConnectionError(f"Could not send key {code} to {host}: {err}") from err
 
 
 async def async_send_keys(host: str, port: int, codes: Sequence[int]) -> None:
@@ -68,10 +75,10 @@ async def async_launch_app(
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as resp:
-                _LOGGER.debug("DIAL %s baslatma yaniti: %s", app, resp.status)
+                _LOGGER.debug("DIAL start %s: TV answered %s", app, resp.status)
                 return resp.status in (200, 201)
     except Exception as err:  # noqa: BLE001
-        _LOGGER.debug("DIAL %s baslatilamadi: %s", app, err)
+        _LOGGER.debug("DIAL start %s failed: %s", app, err)
         return False
 
 
@@ -99,7 +106,7 @@ async def async_get_app_state(
                 match = _STATE_RE.search(await resp.text())
                 return match.group(1) if match else None
     except Exception as err:  # noqa: BLE001
-        _LOGGER.debug("DIAL %s durumu okunamadi: %s", app, err)
+        _LOGGER.debug("DIAL state of %s not readable: %s", app, err)
         return None
 
 
@@ -119,10 +126,10 @@ async def async_stop_app(
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as resp:
-                _LOGGER.debug("DIAL %s kapatma yaniti: %s", app, resp.status)
+                _LOGGER.debug("DIAL stop %s: TV answered %s", app, resp.status)
                 return 200 <= resp.status < 300
     except Exception as err:  # noqa: BLE001
-        _LOGGER.debug("DIAL %s kapatilamadi: %s", app, err)
+        _LOGGER.debug("DIAL stop %s failed: %s", app, err)
         return False
 
 
@@ -158,7 +165,7 @@ async def async_dmr_get(host: str, port: int, action: str) -> str | None:
                 match = _CURRENT_RE.search(await resp.text())
                 return match.group(1) if match else None
     except Exception as err:  # noqa: BLE001
-        _LOGGER.debug("DLNA %s okunamadi: %s", action, err)
+        _LOGGER.debug("DLNA %s not readable: %s", action, err)
         return None
 
 
@@ -207,7 +214,7 @@ class TvEventListener:
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     async with session.ws_connect(self._url, autoping=True) as ws:
                         self._ws = ws
-                        _LOGGER.debug("TV websocket baglandi: %s", self._url)
+                        _LOGGER.debug("TV websocket connected: %s", self._url)
                         async for msg in ws:
                             if msg.type == aiohttp.WSMsgType.TEXT:
                                 self._handle(msg.data)
@@ -219,10 +226,15 @@ class TvEventListener:
             except asyncio.CancelledError:
                 raise
             except Exception as err:  # noqa: BLE001
-                _LOGGER.debug("TV websocket yok: %s", err)
+                _LOGGER.debug("TV websocket not available: %s", err)
             finally:
                 self._ws = None
             await asyncio.sleep(self._reconnect_delay)
+
+    @property
+    def connected(self) -> bool:
+        """True while the websocket to the TV is open."""
+        return self._ws is not None and not self._ws.closed
 
     async def async_reconnect(self) -> None:
         """Drop the current connection (e.g. after the TV rebooted)."""
@@ -230,7 +242,7 @@ class TvEventListener:
             await self._ws.close()
 
     def _handle(self, text: str) -> None:
-        _LOGGER.debug("TV olayi: %s", text)
+        _LOGGER.debug("TV websocket event: %s", text)
         if match := _TV_STATUS_RE.search(text):
             self._on_event("status", match.group(1))
         if match := _TV_STATE_RE.search(text):

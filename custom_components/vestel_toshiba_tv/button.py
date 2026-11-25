@@ -12,9 +12,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import async_send_key_repeated
 from .const import DEFAULT_PORT, KEY_CODES
-from .entity import tv_device_info, volume_steps
+from .entity import async_press_key, tv_device_info, volume_steps
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -89,7 +88,7 @@ class VestelToshibaButton(ButtonEntity):
         count = 1
         if self.entity_description.uses_volume_steps:
             count = volume_steps(self._entry)
-        await async_send_key_repeated(
+        await async_press_key(
             self._host,
             self._port,
             KEY_CODES[self.entity_description.key_name],

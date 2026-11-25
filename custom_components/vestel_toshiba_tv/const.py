@@ -51,6 +51,17 @@ VOLUME_SET_ROUNDS = 3
 WS_PORT = 7681
 WS_RECONNECT_DELAY = 10  # seconds
 
+# The power key is a toggle. After pressing it, wait this long for the TV's
+# websocket answer (standby or awake); if the TV went the wrong way (it was
+# not in the state Home Assistant thought), wait a moment and press again.
+POWER_CONFIRM_TIMEOUT = 5.0  # seconds
+POWER_RETRY_DELAY = 3.0  # seconds
+
+# Some TVs drop off the network for a few seconds now and then while in
+# standby, so coming back does not mean the TV was switched on. Only after
+# being off the network this long is it treated as a fresh start-up.
+LONG_OFFLINE = 600  # seconds
+
 # Pause between repeated key presses so the TV does not drop any (seconds)
 KEY_REPEAT_DELAY = 0.3
 
