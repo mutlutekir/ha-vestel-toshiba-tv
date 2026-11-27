@@ -124,7 +124,7 @@ title: SmartCenter TV Kumandası
 </ol>
 <p>Avoid scene names such as "volume up": Siri may treat them as its own volume command.</p>
 <p><strong>Without scenes (for Siri):</strong> HomeKit gives Siri no volume or channel control for TVs, only switching inputs. Turn on <strong>Add volume and channel shortcuts to the TV inputs</strong> under <strong>Configure</strong>: Volume up, Volume down, Next channel and Previous channel then appear in the TV's input list in Apple Home, and choosing one (or "Hey Siri, switch Living Room TV to Next channel") runs the action. Afterwards the real input is shown again, so the same shortcut can be chosen repeatedly. The channel shortcuts first close Netflix/YouTube if one is open, so the TV is back on its broadcast. The option is off by default.</p>
-<p><strong>Real volume and power state:</strong> the volume and mute state are read from the TV's built-in DLNA renderer (port 2870), so Home Assistant shows them and can set an exact volume (it presses the volume keys until the level is reached; the TV ignores direct volume commands). Normal standby is reported by the TV's event websocket (port 7681); a TV switched off completely drops off the network. Both are shown as <strong>off</strong>. While Netflix or YouTube is open, the input shows that app.</p>
+<p><strong>Real volume and power state:</strong> the volume and mute state are read from the TV's built-in DLNA renderer (port 2870); volume can also be read through SmartCenter's HTTP/websocket protocol when DLNA is unavailable. Home Assistant shows them and can set an exact volume (it presses the volume keys until the level is reached; the TV ignores direct volume commands). Normal standby is reported by the TV's event websocket (port 7681); a TV switched off completely drops off the network. Both are shown as <strong>off</strong>. While Netflix or YouTube is open, the input shows that app.</p>
 
 <h4>Notes</h4>
 <ul>
@@ -237,7 +237,7 @@ title: SmartCenter TV Kumandası
 </ol>
 <p>Sahnelere "sesi aç" gibi adlar vermeyin; Siri bunu kendi ses komutu sanabilir.</p>
 <p><strong>Sahnesiz yöntem (Siri için):</strong> HomeKit, Siri'ye TV'lerde ses ve kanal kontrolü vermez, yalnızca giriş değiştirmeye izin verir. <strong>Yapılandır</strong> ekranında <strong>TV girişlerine ses ve kanal kısayollarını ekle</strong> seçeneğini açın: Ses artır, Ses azalt, Sonraki kanal ve Önceki kanal Apple Home'da TV'nin giriş listesine eklenir; birini seçmek (ya da "Hey Siri, Salon TV'yi Sonraki kanal'a geçir") o işlemi yapar. Ardından gerçek giriş yeniden gösterilir, böylece aynı kısayol tekrar seçilebilir. Kanal kısayolları, Netflix/YouTube açıksa önce onu kapatıp yayına döner. Seçenek varsayılan olarak kapalıdır.</p>
-<p><strong>Gerçek ses ve açık/kapalı durumu:</strong> Ses seviyesi ve sessiz durumu TV'nin dahili DLNA oynatıcısından (port 2870) okunur; Home Assistant bunları gösterir ve sesi tam bir seviyeye getirebilir (TV doğrudan ses komutunu uygulamadığı için seviyeye ulaşana kadar ses tuşlarına basar). Normal bekleme modunu TV kendi olay websocket'inden (port 7681) bildirir; tamamen kapatılan TV ise ağdan düşer. İkisi de <strong>kapalı</strong> görünür. Netflix veya YouTube açıkken giriş olarak o uygulama görünür.</p>
+<p><strong>Gerçek ses ve açık/kapalı durumu:</strong> Ses seviyesi ve sessiz durumu TV'nin dahili DLNA oynatıcısından (port 2870) okunur. DLNA kullanılamadığında ses seviyesi SmartCenter HTTP/websocket protokolü üzerinden de okunabilir; Home Assistant bunları gösterir ve sesi tam bir seviyeye getirebilir (TV doğrudan ses komutunu uygulamadığı için seviyeye ulaşana kadar ses tuşlarına basar). Normal bekleme modunu TV kendi olay websocket'inden (port 7681) bildirir; tamamen kapatılan TV ise ağdan düşer. İkisi de <strong>kapalı</strong> görünür. Netflix veya YouTube açıkken giriş olarak o uygulama görünür.</p>
 
 <h4>Notlar</h4>
 <ul>
@@ -250,3 +250,37 @@ title: SmartCenter TV Kumandası
 <ul>
 <li><strong>Geliştirici:</strong> Mutlu Tekir</li>
 </ul>
+
+
+## SmartCenter volume fallback
+
+Some Toshiba/Vestel TVs expose SmartCenter but no reachable DLNA renderer on
+port 2870. On these models the integration also supports the volume protocol
+used by Toshiba TV Smart Center:
+
+1. Keep the TV's event websocket open on port 7681.
+2. POST `<command>volume</command>` to `/apps/SmartCenter` on the configured
+   control port (usually 56789), with `application_name: toshiba smart center`.
+3. Read `<volume level='7'/>` from that websocket. The HTTP response body may be
+   empty, even when the query succeeds.
+
+DLNA remains the first choice. If it cannot return a valid level, polling and
+absolute-volume adjustment fall back to this query using the existing event
+listener. Volume events also update the media player and its volume sensor.
+An HTTP success without a valid websocket reply leaves the reading unknown;
+it is never interpreted as volume zero. Requests are serialized and time out
+when the TV does not answer. A timed-out or cancelled query reconnects the
+event stream so a late reply cannot satisfy the next query. Mute readback still
+requires DLNA.
+
+Verified on a Toshiba reporting chassis **MB181X**, firmware **2.85.2.1**:
+DLNA port 2870 timed out, while the SmartCenter query returned 0 and then 7
+after the volume was changed to 7 with the physical remote. Other firmware
+versions may not implement this response. On startup the first fallback
+reading may wait until the background event listener has connected.
+
+Protocol tests (Python 3.11+ and `aiohttp`, without Home Assistant):
+
+```sh
+python -m unittest discover -s tests -v
+```

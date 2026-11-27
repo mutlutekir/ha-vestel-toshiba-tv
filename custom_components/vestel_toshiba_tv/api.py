@@ -1,14 +1,21 @@
 """Key sender for the Vestel/Toshiba SmartCenter virtual remote."""
+
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Sequence
 import logging
 import re
+import xml.etree.ElementTree as ET
+from collections.abc import Awaitable, Callable, Sequence
 
 import aiohttp
 
-from .const import DIAL_APP_PATH, DMR_CONTROL_PATH, KEY_REPEAT_DELAY
+from .const import (
+    DIAL_APP_PATH,
+    DMR_CONTROL_PATH,
+    KEY_REPEAT_DELAY,
+    VOLUME_QUERY_TIMEOUT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,9 +58,7 @@ async def async_send_keys(host: str, port: int, codes: Sequence[int]) -> None:
         await async_send_key(host, port, code)
 
 
-async def async_send_key_repeated(
-    host: str, port: int, code: int, count: int
-) -> None:
+async def async_send_key_repeated(host: str, port: int, code: int, count: int) -> None:
     """Send the same key code several times with a short pause in between."""
     await async_send_keys(host, port, [code] * count)
 
@@ -169,10 +174,21 @@ async def async_dmr_get(host: str, port: int, action: str) -> str | None:
         return None
 
 
-async def async_get_volume(host: str, port: int) -> int | None:
-    """Current TV volume (0-100) or None."""
+async def async_get_volume(
+    host: str,
+    port: int,
+    *,
+    smartcenter: Callable[[], Awaitable[int | None]] | None = None,
+) -> int | None:
+    """Read volume via DLNA, falling back to SmartCenter when unavailable."""
     value = await async_dmr_get(host, port, "GetVolume")
-    return int(value) if value is not None and value.isdigit() else None
+    if value is not None and value.isascii() and value.isdecimal():
+        level = int(value)
+        if 0 <= level <= 100:
+            return level
+    if smartcenter is not None:
+        return await smartcenter()
+    return None
 
 
 async def async_get_mute(host: str, port: int) -> bool | None:
@@ -191,7 +207,7 @@ class TvEventListener:
     """Keeps a websocket to the TV open and reports its events.
 
     on_event is called with ("status", "1"), ("status", "0") or
-    ("state", "<value>").
+    ("state", "<value>") or ("volume", "<level>").
     """
 
     def __init__(
@@ -201,10 +217,14 @@ class TvEventListener:
         on_event: Callable[[str, str], None],
         reconnect_delay: float,
     ) -> None:
+        self._host = host
         self._url = f"http://{host}:{port}/"
         self._on_event = on_event
         self._reconnect_delay = reconnect_delay
         self._ws: aiohttp.ClientWebSocketResponse | None = None
+        # Volume replies carry no request ID: allow only one pending query.
+        self._volume_lock = asyncio.Lock()
+        self._volume_answer: asyncio.Future[int | None] | None = None
 
     async def run(self) -> None:
         """Listen until cancelled, reconnecting when the connection drops."""
@@ -229,12 +249,58 @@ class TvEventListener:
                 _LOGGER.debug("TV websocket not available: %s", err)
             finally:
                 self._ws = None
+                if self._volume_answer is not None and not self._volume_answer.done():
+                    self._volume_answer.set_result(None)
             await asyncio.sleep(self._reconnect_delay)
 
     @property
     def connected(self) -> bool:
         """True while the websocket to the TV is open."""
         return self._ws is not None and not self._ws.closed
+
+    async def async_get_volume(self, port: int) -> int | None:
+        """Query SmartCenter over HTTP and receive its reply on this websocket.
+
+        Register the waiter before posting: the TV can publish its volume
+        before the HTTP response arrives. Never treat HTTP 200 as a value.
+        """
+        async with self._volume_lock:
+            if not self.connected:
+                return None
+            answer = asyncio.get_running_loop().create_future()
+            self._volume_answer = answer
+            try:
+                async with asyncio.timeout(VOLUME_QUERY_TIMEOUT):
+                    connector = aiohttp.TCPConnector(force_close=True)
+                    async with aiohttp.ClientSession(connector=connector) as session:
+                        async with session.post(
+                            f"http://{self._host}:{port}{DIAL_APP_PATH}",
+                            data="<command>volume</command>",
+                            headers={
+                                "Content-Type": "text/plain; charset=ISO-8859-1",
+                                "application_name": "toshiba smart center",
+                                "Connection": "close",
+                            },
+                            allow_redirects=False,
+                        ) as response:
+                            await response.read()
+                            if response.status not in (200, 201):
+                                return None
+                    return await answer
+            except (TimeoutError, asyncio.CancelledError) as err:
+                # An uncorrelated late reply must not satisfy the next query.
+                await self.async_reconnect()
+                if isinstance(err, asyncio.CancelledError):
+                    raise
+                _LOGGER.debug("SmartCenter volume query timed out")
+                return None
+            except (aiohttp.ClientError, OSError) as err:
+                _LOGGER.debug("SmartCenter volume not readable: %s", err)
+                return None
+            finally:
+                self._volume_answer = None
+                if not answer.done():
+                    answer.cancel()
 
     async def async_reconnect(self) -> None:
         """Drop the current connection (e.g. after the TV rebooted)."""
@@ -243,6 +309,21 @@ class TvEventListener:
 
     def _handle(self, text: str) -> None:
         _LOGGER.debug("TV websocket event: %s", text)
+        if text.lstrip().startswith("<volume"):
+            try:
+                element = ET.fromstring(text)
+                value = element.get("level", "")
+                if element.tag == "volume" and value.isascii() and value.isdecimal():
+                    level = int(value)
+                    if 0 <= level <= 100:
+                        if (
+                            self._volume_answer is not None
+                            and not self._volume_answer.done()
+                        ):
+                            self._volume_answer.set_result(level)
+                        self._on_event("volume", str(level))
+            except (ET.ParseError, ValueError):
+                pass
         if match := _TV_STATUS_RE.search(text):
             self._on_event("status", match.group(1))
         if match := _TV_STATE_RE.search(text):

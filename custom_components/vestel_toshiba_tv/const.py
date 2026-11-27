@@ -44,6 +44,8 @@ DMR_PORT = 2870
 DMR_CONTROL_PATH = "/RenderingControl/control"
 # Rounds of "read volume, press keys" when setting an exact volume
 VOLUME_SET_ROUNDS = 3
+# HTTP query and websocket reply share this timeout.
+VOLUME_QUERY_TIMEOUT = 3.0  # seconds
 
 # The TV pushes events over a websocket. In normal standby the TV stays on the
 # network (DIAL still says "running"); the only sign is "tv_status:1" here.

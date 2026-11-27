@@ -208,7 +208,12 @@ class VestelToshibaTV(MediaPlayerEntity, RestoreEntity):
 
     @callback
     def _handle_tv_event(self, kind: str, value: str) -> None:
-        """Standby / wake-up events pushed by the TV."""
+        """Standby / wake-up and volume events pushed by the TV."""
+        if kind == "volume":
+            self._attr_volume_level = int(value) / 100
+            if self.hass is not None:
+                self.async_write_ha_state()
+            return
         if kind == "status":
             standby = value == "1"
         elif kind == "state":
@@ -244,7 +249,7 @@ class VestelToshibaTV(MediaPlayerEntity, RestoreEntity):
     # ── Polling ────────────────────────────────────────────────────────
 
     async def async_update(self) -> None:
-        """Fetch TV state from DIAL, volume and mute from the DLNA renderer."""
+        """Fetch DIAL state and audio information from DLNA or SmartCenter."""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -327,9 +332,17 @@ class VestelToshibaTV(MediaPlayerEntity, RestoreEntity):
             # The app was closed: the TV went back to its broadcast
             self._attr_source = TV_SOURCE
 
+    async def _async_get_volume(self) -> int | None:
+        """Use the existing event listener when DLNA volume is unavailable."""
+        return await async_get_volume(
+            self._host,
+            DMR_PORT,
+            smartcenter=lambda: self._listener.async_get_volume(self._port),
+        )
+
     async def _async_read_volume(self) -> None:
-        """Read the real volume and mute state from the TV's DLNA renderer."""
-        volume = await async_get_volume(self._host, DMR_PORT)
+        """Read volume from DLNA or SmartCenter; mute still uses DLNA."""
+        volume = await self._async_get_volume()
         if volume is not None:
             self._attr_volume_level = min(volume, 100) / 100
         muted = await async_get_mute(self._host, DMR_PORT)
@@ -428,10 +441,10 @@ class VestelToshibaTV(MediaPlayerEntity, RestoreEntity):
         """Reach an exact volume with remote keys (the TV only accepts keys)."""
         target = round(volume * 100)
         for _ in range(VOLUME_SET_ROUNDS):
-            current = await async_get_volume(self._host, DMR_PORT)
+            current = await self._async_get_volume()
             if current is None:
                 raise HomeAssistantError(
-                    f"Could not read the TV volume (DLNA port {DMR_PORT})"
+                    "Could not read the TV volume via DLNA or SmartCenter"
                 )
             diff = target - current
             if diff == 0:
